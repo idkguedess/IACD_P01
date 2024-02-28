@@ -1,4 +1,4 @@
-# MÓDULO PARA EVALUAR LA
+# MODULO PARA EVALUAR LA
 
 import string
 import itertools
@@ -45,13 +45,25 @@ def evaluate_formula(formula, truth_dic):
                     i += 1
                     next_char = formula[i]
                     if char == '|':
-                        stack.append(stack.pop() or truth_dic[next_char])
+                        if stack:
+                            stack.append(stack.pop() or truth_dic[next_char])
+                        else:
+                            return "Error: Faltan operandos en la fórmula"
                     elif char == '&':
-                        stack.append(stack.pop() and truth_dic[next_char])
+                        if stack:
+                            stack.append(stack.pop() and truth_dic[next_char])
+                        else:
+                            return "Error: Faltan operandos en la fórmula"
                     elif char == '>':
-                        stack.append(not stack.pop() or truth_dic[next_char])
+                        if stack:
+                            stack.append(not stack.pop() or truth_dic[next_char])
+                        else:
+                            return "Error: Faltan operandos en la fórmula"
                     elif char == '=':
-                        stack.append(stack.pop() == truth_dic[next_char])
+                        if stack:
+                            stack.append(stack.pop() == truth_dic[next_char])
+                        else:
+                            return "Error: Faltan operandos en la fórmula"
                 else:
                     return "Error: Faltan operandos en la fórmula"
         i += 1
@@ -113,8 +125,3 @@ def print_truth_table(formula):
         print(row)
 
     print(separator)
-
-
-# Ejemplo de uso con nombres de variables generados automáticamente:
-formula = "p&q&a"  # Fórmula lógica
-print_truth_table(formula)
