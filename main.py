@@ -8,7 +8,7 @@ def main():
     print("Fórmula ingresada:", formula)  # Impresión de depuración
 
     print_truth_table(formula)
-
+    print(analyze_formula(formula))
 
 if __name__ == "__main__":
     main()
