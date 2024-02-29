@@ -29,7 +29,8 @@ def evaluate_formula(formula, variables, truth_combinations):
             if char.isalpha():  # Si el carácter es una letra
                 if char in truth_dic:
                     output.append(truth_dic[
-                                      char])  # Agregamos el valor de verdad correspondiente al carácter a la lista de salida
+                                      char])  # Agregamos el valor de verdad correspondiente al carácter a la lista
+                    # de salida
                 else:
                     output.append(
                         not truth_dic.get('!' + char, True))  # Si la variable negada no está definida, asumimos True
@@ -45,7 +46,8 @@ def evaluate_formula(formula, variables, truth_combinations):
             elif char == ')':  # Si el carácter es un paréntesis de cip&!qerre
                 while stack and stack[-1] != '(':
                     output.append(
-                        stack.pop())  # Desapilamos los operadores hasta encontrar el paréntesis de apertura correspondiente
+                        stack.pop())  # Desapilamos los operadores hasta encontrar el paréntesis de apertura
+                    # correspondiente
                 stack.pop()  # Quitamos el paréntesis de apertura de la pila
 
         while stack:
