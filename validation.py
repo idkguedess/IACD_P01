@@ -3,42 +3,45 @@
 #
 def is_valid_formula(formula):
     """
-    Verifica si la fórmula es válida, bien formada.
+    Verifica si la fórmula es válida y bien formada.
     """
     stack = []
     for char in formula:
         if char.isalpha():
-            if char.islower():
-                stack.append(char)
-            else:
-                return False  # Carácter inválido
+            stack.append(char)
         elif char == '(':
             stack.append(char)
         elif char == ')':
-            if len(stack) < 2:
-                return False  # No hay suficientes operandos
-            elif stack[-1] == '(':
-                return False  # Paréntesis vacío
-            elif stack[-2] != '(' and stack[-1] != ')':
-                stack.pop()  # Elimina el paréntesis de cierre
-                stack.pop()  # Elimina los operandos dentro del paréntesis
-                stack.append('T')  # En lugar de mantener la subexpresión en la pila, que es una estructura temporal,
-                # se reemplaza por el marcador 'T'. Esto indica que la subexpresión ha sido evaluada
-                # correctamente y no es necesario seguir rastreándola en la pila
+            if '(' not in stack:
+                return False  # Falta el paréntesis de apertura correspondiente
             else:
-                return False  # Expresión inválida dentro del paréntesis
-        elif char in ['!', '|', '&', '>', '=']:  # Operadores modificados
-            if len(stack) < 2:
-                return False  # No hay suficientes operandos
-            elif stack[-1] in ['!', '|', '&', '>', '=']:
-                return False  # Operadores consecutivos
+                # Verificar que haya al menos un operando entre los paréntesis
+                while stack[-1] != '(':
+                    if not stack or stack[-1] in ['!', '|', '&', '>', '=']:
+                        return False  # Operadores consecutivos o falta de operando antes del operador
+                    stack.pop()
+                stack.pop()  # Eliminar el paréntesis de apertura
+        elif char in ['!', '|', '&', '>', '=']:  # Operadores lógicos
+            if not stack or (stack[-1] in ['!', '|', '&', '>', '='] or stack[-1] == '('):
+                return False  # Operadores consecutivos o falta de operando antes del operador
             else:
-                stack.pop()  # Elimina el segundo operando
-                stack.pop()  # Elimina el primer operando
-                stack.append('T')  # Reemplaza la subexpresión con 'T'
+                # Pop the operands and check if they are valid variables
+                operand = stack.pop()
+                if not operand.isalpha():
+                    return False
+                stack.append(char)
         else:
             return False  # Carácter inválido
-    return len(stack) == 1 and stack[0].islower()
-# Al finalizar la evaluación de la fórmula, si hay más de un elemento en la pila, significa que hay más de una
+
+    # Verificar si quedaron paréntesis de apertura sin cerrar
+    if '(' in stack:
+        return False  # Paréntesis de apertura sin cerrar
+
+    # Verificar si la fórmula está bien formada
+    if len(stack) != 1 or not stack[0].isalpha():
+        return False  # La fórmula no está bien formada
+
+    return True  # La fórmula es válida y bien formada
+#Al finalizar la evaluación de la fórmula, si hay más de un elemento en la pila, significa que hay más de una
 # expresión lógica o que no se ha completado correctamente la evaluación de la fórmula. Si no hay ningún elemento en
 # la pila, indica que la fórmula está incompleta o que hay un paréntesis de apertura sin su correspondiente cierre.

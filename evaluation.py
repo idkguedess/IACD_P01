@@ -1,17 +1,6 @@
-# MODULO PARA EVALUAR LA
+# evaluation.py
 
-import string
 import itertools
-
-def create_truth_values():
-    """
-    Crea un diccionario con todas las letras del inglés en minúscula como claves
-    y valores inicializados en None.
-    """
-    alphabet = string.ascii_lowercase  # Obtenemos el alfabeto en minúsculas
-    truth_dic = {letter: None for letter in alphabet}  # Creamos un diccionario con las letras del alfabeto como
-    # claves y valores inicializados en None
-    return truth_dic  # Retornamos el diccionario creado
 
 
 def generate_truth_combinations(variables):
@@ -22,106 +11,68 @@ def generate_truth_combinations(variables):
     return list(itertools.product(truth_values, repeat=len(variables)))
 
 
-def evaluate_formula(formula, truth_dic):
+def evaluate_formula(formula, variables, truth_combinations):
     """
-    Evalúa la fórmula utilizando los valores de verdad especificados en el diccionario truth_values.
+    Evalúa la fórmula utilizando las combinaciones de valores de verdad especificadas.
     """
-    stack = []  # Inicializamos una pila vacía
-    i = 0
-    while i < len(formula):
-        char = formula[i]
-        if char.isalpha():  # Si el carácter es una letra
-            stack.append(truth_dic[char])  # Agregamos el valor de verdad correspondiente al carácter a la pila
-        elif char in ['!', '|', '&', '>', '=']:  # Si el carácter es un operador lógico
-            if char == '!':  # Si es el operador de negación
-                if i + 1 < len(formula) and formula[i + 1].isalpha():
-                    i += 1
-                    next_char = formula[i]
-                    stack.append(not truth_dic[next_char])  # Aplicamos la negación y agregamos el resultado a la pila
-                else:
-                    return "Error: Faltan operandos en la fórmula"
-            else:  # Si es otro operador lógico
-                if i + 1 < len(formula) and formula[i + 1].isalpha():
-                    i += 1
-                    next_char = formula[i]
-                    if char == '|':
-                        if stack:
-                            stack.append(stack.pop() or truth_dic[next_char])
-                        else:
-                            return "Error: Faltan operandos en la fórmula"
-                    elif char == '&':
-                        if stack:
-                            stack.append(stack.pop() and truth_dic[next_char])
-                        else:
-                            return "Error: Faltan operandos en la fórmula"
-                    elif char == '>':
-                        if stack:
-                            stack.append(not stack.pop() or truth_dic[next_char])
-                        else:
-                            return "Error: Faltan operandos en la fórmula"
-                    elif char == '=':
-                        if stack:
-                            stack.append(stack.pop() == truth_dic[next_char])
-                        else:
-                            return "Error: Faltan operandos en la fórmula"
-                else:
-                    return "Error: Faltan operandos en la fórmula"
-        i += 1
-
-        # Actualizar valores de verdad en el diccionario si es posible
-        if char.isalpha() and truth_dic[char] is None:  # Si el carácter es una letra y su valor de verdad aún no
-            # está definido
-            truth_dic[char] = stack[-1]  # Actualizamos el valor de verdad en el diccionario con el último valor
-            # agregado a la pila
-
-    return stack[0]  # Retornamos el resultado final de la evaluación de la fórmula
-
-
-def generate_truth_table(formula):
-    """
-    Genera una tabla de verdad para la fórmula dada.
-    """
-    # Obtener variables de la fórmula
-    variables = set(char for char in formula if char.isalpha())
-
-    # Generar combinaciones de valores de verdad para las variables
-    truth_combinations = generate_truth_combinations(variables)
-
-    # Evaluar la fórmula para cada combinación de valores de verdad
     results = []
+
+    # Definimos la precedencia de los operadores lógicos
+    precedence = {'!': 3, '&': 1, '|': 1, '>': 0, '=': 0}
+
     for truth_combination in truth_combinations:
         truth_dic = dict(zip(variables, truth_combination))
-        result = evaluate_formula(formula, truth_dic)
-        results.append((truth_combination, result))
+        stack = []  # Inicializamos una pila vacía
+        output = []  # Inicializamos una lista de salida
+
+        for char in formula:
+            if char.isalpha():  # Si el carácter es una letra
+                if char in truth_dic:
+                    output.append(truth_dic[
+                                      char])  # Agregamos el valor de verdad correspondiente al carácter a la lista
+                    # de salida
+                else:
+                    output.append(
+                        not truth_dic.get('!' + char, True))  # Si la variable negada no está definida, asumimos True
+            elif char == '!':  # Si el carácter es una negación
+                stack.append(char)  # Agregamos la negación a la pila
+            elif char in ['&', '|', '>', '=']:  # Si el carácter es un operador lógico
+                while stack and precedence.get(stack[-1], 0) >= precedence[char]:
+                    output.append(
+                        stack.pop())  # Desapilamos los operadores con mayor o igual precedencia que el operador actual
+                stack.append(char)  # Agregamos el operador actual a la pila
+            elif char == '(':  # Si el carácter es un paréntesis de apertura
+                stack.append(char)  # Agregamos el paréntesis a la pila
+            elif char == ')':  # Si el carácter es un paréntesis de cip&!qerre
+                while stack and stack[-1] != '(':
+                    output.append(
+                        stack.pop())  # Desapilamos los operadores hasta encontrar el paréntesis de apertura
+                    # correspondiente
+                stack.pop()  # Quitamos el paréntesis de apertura de la pila
+
+        while stack:
+            output.append(stack.pop())  # Desapilamos los operadores restantes
+
+        # Ahora evaluamos la expresión en notación polaca inversa (RPN)
+        eval_stack = []
+        for token in output:
+            if token in [True, False]:  # Si el token es un valor de verdad
+                eval_stack.append(token)  # Apilamos el valor de verdad
+            elif token == '!':  # Si el token es una negación
+                operand = eval_stack.pop()  # Desapilamos el operando
+                eval_stack.append(not operand)  # Aplicamos la negación y apilamos el resultado
+            elif token in ['&', '|', '>', '=']:  # Si el token es un operador lógico
+                operand2 = eval_stack.pop()  # Desapilamos el segundo operando
+                operand1 = eval_stack.pop()  # Desapilamos el primer operando
+                if token == '&':
+                    eval_stack.append(operand1 and operand2)  # Aplicamos la conjunción y apilamos el resultado
+                elif token == '|':
+                    eval_stack.append(operand1 or operand2)  # Aplicamos la disyunción y apilamos el resultado
+                elif token == '>':
+                    eval_stack.append(not operand1 or operand2)  # Aplicamos la implicación y apilamos el resultado
+                elif token == '=':
+                    eval_stack.append(operand1 == operand2)  # Aplicamos la doble implicación y apilamos el resultado
+
+        results.append(eval_stack[0])  # Agregamos el resultado de la evaluación a la lista de resultados
 
     return results
-
-
-def print_truth_table(formula):
-    """
-    Imprime la tabla de verdad para la fórmula dada con nombres de variables generados automáticamente.
-    """
-    # Obtener variables de la fórmula
-    variables = [char for char in formula if char.isalpha()]
-    num_variables = len(set(variables))
-
-    # Generar nombres de variables
-    variable_names = [i for i in variables]
-
-    # Generar la tabla de verdad
-    truth_table = generate_truth_table(formula)
-
-    # Imprimir encabezado de la tabla
-    header = " | ".join(variable_names + [formula])
-    separator = "-" * len(header)
-    print(separator)
-    print(header)
-    print(separator)
-
-    # Imprimir filas de la tabla
-    for truth_combination, result in truth_table:
-        row_values = [str(value) for value in truth_combination] + [str(result)]
-        row = " | ".join(row_values)
-        print(row)
-
-    print(separator)
