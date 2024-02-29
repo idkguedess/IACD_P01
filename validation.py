@@ -12,24 +12,22 @@ def is_valid_formula(formula):
         elif char == '(':
             stack.append(char)
         elif char == ')':
-            if '(' not in stack:
-                return False  # Falta el paréntesis de apertura correspondiente
-            else:
-                # Verificar que haya al menos un operando entre los paréntesis
-                while stack[-1] != '(':
-                    if not stack or stack[-1] in ['!', '|', '&', '>', '=']:
-                        return False  # Operadores consecutivos o falta de operando antes del operador
-                    stack.pop()
-                stack.pop()  # Eliminar el paréntesis de apertura
+            # Verificar que haya al menos un operando antes de un operador lógico
+            has_operand = False
+            while stack[-1] != '(':
+                if stack[-1] in ['!', '|', '&', '>', '=']:
+                    has_operand = True
+                stack.pop()
+                if not stack:
+                    return False  # Falta el paréntesis de apertura correspondiente
+            if not has_operand:
+                return False  # No hay operando antes del operador lógico
+            stack.pop()  # Eliminar el paréntesis de apertura
         elif char in ['!', '|', '&', '>', '=']:  # Operadores lógicos
-            if not stack or (stack[-1] in ['!', '|', '&', '>', '='] or stack[-1] == '('):
-                return False  # Operadores consecutivos o falta de operando antes del operador
-            else:
-                # Pop the operands and check if they are valid variables
-                operand = stack.pop()
-                if not operand.isalpha():
-                    return False
-                stack.append(char)
+            # Verificar que haya al menos un operando antes del operador lógico
+            if not stack or stack[-1] in ['(', '!', '|', '&', '>', '=']:
+                return False  # Falta operando antes del operador lógico
+            stack.append(char)
         else:
             return False  # Carácter inválido
 
